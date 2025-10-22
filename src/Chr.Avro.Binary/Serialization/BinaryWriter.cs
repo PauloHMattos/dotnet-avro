@@ -56,7 +56,6 @@ namespace Chr.Avro.Serialization
             WriteInteger(value.Length);
             WriteFixed(value);
         }
-#if NET6_0_OR_GREATER
 
         /// <summary>
         /// Writes fixed-length binary data to the current position and advances the writer.
@@ -69,7 +68,6 @@ namespace Chr.Avro.Serialization
             WriteInteger(value.Length);
             WriteFixed(value);
         }
-#endif
 
         /// <summary>
         /// Writes a double-precision floating-point number to the current position and advances
@@ -105,7 +103,6 @@ namespace Chr.Avro.Serialization
         {
             stream.Write(value, 0, value.Length);
         }
-#if NET6_0_OR_GREATER
 
         /// <summary>
         /// Writes fixed-length binary data to the current position and advances the writer.
@@ -115,9 +112,17 @@ namespace Chr.Avro.Serialization
         /// </param>
         public void WriteFixed(ReadOnlySpan<byte> value)
         {
-            stream.Write(value);
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(value.Length);
+            try
+            {
+                value.CopyTo(buffer);
+                stream.Write(buffer, 0, value.Length);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
         }
-#endif
 
         /// <summary>
         /// Writes a variable-length integer to the current position and advances the writer.
