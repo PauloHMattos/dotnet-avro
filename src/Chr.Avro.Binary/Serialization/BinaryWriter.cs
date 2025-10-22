@@ -1,6 +1,7 @@
 namespace Chr.Avro.Serialization
 {
     using System;
+    using System.Buffers;
 #if NET6_0_OR_GREATER
     using System.Buffers.Binary;
 #endif
@@ -201,7 +202,42 @@ namespace Chr.Avro.Serialization
         /// </param>
         public void WriteString(string value)
         {
-            WriteBytes(Encoding.UTF8.GetBytes(value));
+            int byteCount = Encoding.UTF8.GetByteCount(value);
+
+            WriteInteger(byteCount);
+
+#if NET6_0_OR_GREATER
+            if (byteCount <= 256)
+            {
+                Span<byte> buffer = stackalloc byte[256];
+                int actualCount = Encoding.UTF8.GetBytes(value, buffer);
+                stream.Write(buffer.Slice(0, actualCount));
+            }
+            else
+            {
+                byte[] rented = ArrayPool<byte>.Shared.Rent(byteCount);
+                try
+                {
+                    int actualCount = Encoding.UTF8.GetBytes(value, rented);
+                    stream.Write(rented, 0, actualCount);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
+            }
+#else
+            byte[] rented = ArrayPool<byte>.Shared.Rent(byteCount);
+            try
+            {
+                int actualCount = Encoding.UTF8.GetBytes(value, 0, value.Length, rented, 0);
+                stream.Write(rented, 0, actualCount);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+#endif
         }
     }
 }
