@@ -18,7 +18,7 @@ namespace Chr.Avro.Serialization
         {
             if (target.GetEnumerableType() is Type itemType)
             {
-                var collectionType = typeof(ICollection<>).MakeGenericType(itemType);
+                var collectionType = typeof(IReadOnlyCollection<>).MakeGenericType(itemType);
                 var enumerableType = typeof(IEnumerable<>).MakeGenericType(itemType);
 
                 var toList = typeof(Enumerable)
@@ -58,7 +58,7 @@ namespace Chr.Avro.Serialization
         {
             if (target.GetEnumerableType() is Type itemType)
             {
-                var collectionType = typeof(ICollection<>).MakeGenericType(itemType);
+                var collectionType = typeof(IReadOnlyCollection<>).MakeGenericType(itemType);
                 var enumerableType = typeof(IEnumerable<>).MakeGenericType(itemType);
 
                 if (!collectionType.IsAssignableFrom(value.Type))
